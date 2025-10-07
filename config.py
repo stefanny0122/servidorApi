@@ -37,7 +37,7 @@ class SecurityConfig:
 class AppConfig:
     # Configuración servidor
     host: str = "0.0.0.0"
-    port: int = 8080
+    port: int = 8000
     debug: bool = True
     
     # Configuración base de datos servidor (Aiven)
