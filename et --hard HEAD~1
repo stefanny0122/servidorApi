@@ -1,0 +1,3 @@
+[33m71e4607[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m chore: Remove .env from Git tracking
+[33m773c19c[m fix: Reemplazar bcrypt con PBKDF2 para hashing de contraseñas- Eliminar dependencia de bcrypt/passlib que causaba errores- Implementar PBKDF2-HMAC-SHA256 con 100,000 iteraciones (estándar OWASP)- Cambiar validación de contraseña a mínimo 6 caracteres- Actualizar utils/seguridad.py- Actualizar services/autenticacion.py- Actualizar routes/auth_routes.py
+[33m36d39d1[m[33m ([m[1;31morigin/main[m[33m)[m Initial commit: Clean repository without secrets

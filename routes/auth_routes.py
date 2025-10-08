@@ -444,6 +444,6 @@ async def enviar_email_reset_password(email: str, token: str):
     try:
         logger.info(f"Enviando email de reset de password a {email}")
         # Aquí implementarías el envío real del email con el link de reset
-        # reset_link = f"https://tu-app.com/reset-password?token={token}"
+        reset_link = f"https://tu-app.com/reset-password?token={token}"
     except Exception as e:
         logger.error(f"Error enviando email de reset: {e}")
