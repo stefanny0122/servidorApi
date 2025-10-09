@@ -10,7 +10,8 @@ from models.transformacion import Transformacion
 from models.cliente_models import SolicitudCliente, ImagenCliente
 from config import config
 from utils.logger import get_logger
-from services.gestor_nodos import GestorNodosImpl
+# IMPORTACIÓN CORREGIDA:
+from services.GestorNodoImpl import GestorNodosImpl
 
 logger = get_logger("ProcesadorLotesCorregido")
 

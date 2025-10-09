@@ -3,7 +3,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from services.autenticacion import ServicioAutenticacion
-from services.gestor_nodos import GestorNodosImpl
+# IMPORTACIÓN CORREGIDA:
+from services.GestorNodoImpl import GestorNodosImpl
 from utils.logger import get_logger
 
 router = APIRouter(prefix="/nodos", tags=["gestion_nodos"])
