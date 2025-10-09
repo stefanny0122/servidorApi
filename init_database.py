@@ -5,12 +5,10 @@ logger = get_logger("DatabaseInit")
 
 def main():
     print("Inicializando base de datos...")
-    try:
-        # Inicializar tablas
+    try: 
         init_db()
         print("Tablas creadas exitosamente")
-        
-        # Probar conexiones
+         
         test_connections()
         print("Conexiones a BD verificadas")
         

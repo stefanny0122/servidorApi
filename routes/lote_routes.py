@@ -17,16 +17,14 @@ router = APIRouter(prefix="/lotes", tags=["procesamiento_lotes"])
 logger = get_logger("LoteRoutes")
 security = HTTPBearer()
 
-# Configuración de límites
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB por archivo
-MAX_FILES_PER_BATCH = 100  # Máximo de archivos por lote
+MAX_FILE_SIZE = 50 * 1024 * 1024   
+MAX_FILES_PER_BATCH = 100   
 ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.webp', '.gif'}
 ALLOWED_MIME_TYPES = {
     'image/png', 'image/jpeg', 'image/jpg', 'image/tiff', 
     'image/bmp', 'image/webp', 'image/gif'
 }
-
-# Instancia singleton del procesador
+ 
 _procesador_lotes: Optional[ProcesadorLotesImpl] = None
 
 def obtener_procesador_lotes() -> ProcesadorLotesImpl:
@@ -65,16 +63,14 @@ def validar_archivo(file: UploadFile) -> tuple[bool, Optional[str]]:
     Valida un archivo subido
     Returns: (es_valido, mensaje_error)
     """
-    # Validar nombre de archivo
+ 
     if not file.filename:
         return False, "Archivo sin nombre"
-    
-    # Validar extensión
+     
     extension = Path(file.filename).suffix.lower()
     if extension not in ALLOWED_EXTENSIONS:
         return False, f"Extensión no permitida: {extension}. Permitidas: {', '.join(ALLOWED_EXTENSIONS)}"
-    
-    # Validar tipo MIME
+     
     if file.content_type and file.content_type not in ALLOWED_MIME_TYPES:
         return False, f"Tipo MIME no permitido: {file.content_type}"
     
@@ -86,8 +82,7 @@ def generar_nombre_unico(nombre_original: str) -> str:
     random_id = uuid.uuid4().hex[:8]
     extension = Path(nombre_original).suffix
     nombre_base = Path(nombre_original).stem
-    
-    # Sanitizar nombre base (remover caracteres especiales)
+     
     nombre_base = "".join(c for c in nombre_base if c.isalnum() or c in ('-', '_'))
     
     return f"{timestamp}_{random_id}_{nombre_base}{extension}"
@@ -99,27 +94,23 @@ async def guardar_archivo_temporal(
 ) -> tuple[str, int]:
     """
     Guarda un archivo temporal y retorna (ruta, tamaño_bytes)
-    """
-    # Crear subdirectorio para el lote
+    """ 
     directorio_lote = os.path.join(directorio, f"lote_{id_lote}")
     os.makedirs(directorio_lote, exist_ok=True)
-    
-    # Generar nombre único
+     
     nombre_unico = generar_nombre_unico(file.filename)
     ruta_archivo = os.path.join(directorio_lote, nombre_unico)
-    
-    # Leer y guardar archivo con validación de tamaño
+     
     tamanio_total = 0
-    chunk_size = 1024 * 1024  # 1MB chunks
+    chunk_size = 1024 * 1024  
     
     try:
         with open(ruta_archivo, "wb") as buffer:
             while chunk := await file.read(chunk_size):
                 tamanio_total += len(chunk)
-                
-                # Verificar límite de tamaño
+                 
                 if tamanio_total > MAX_FILE_SIZE:
-                    # Eliminar archivo parcial
+ 
                     buffer.close()
                     os.remove(ruta_archivo)
                     raise HTTPException(
@@ -135,7 +126,7 @@ async def guardar_archivo_temporal(
     except HTTPException:
         raise
     except Exception as e:
-        # Limpiar en caso de error
+ 
         if os.path.exists(ruta_archivo):
             os.remove(ruta_archivo)
         logger.error(f"Error guardando archivo {file.filename}: {e}")
@@ -157,8 +148,7 @@ def validar_transformaciones(transformaciones_str: str) -> List[dict]:
         
         if len(transformaciones) > 20:
             raise ValueError("Máximo 20 transformaciones por lote")
-        
-        # Validar estructura de cada transformación
+         
         for i, trans in enumerate(transformaciones):
             if not isinstance(trans, dict):
                 raise ValueError(f"Transformación {i} debe ser un objeto")
@@ -194,8 +184,7 @@ async def procesar_lote(
         f"{len(files)} archivos"
     )
     
-    try:
-        # Validar número de archivos
+    try: 
         if len(files) == 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -207,8 +196,7 @@ async def procesar_lote(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Máximo {MAX_FILES_PER_BATCH} archivos por lote"
             )
-        
-        # Validar y parsear transformaciones
+         
         try:
             transformaciones_list = validar_transformaciones(transformaciones)
         except ValueError as e:
@@ -217,32 +205,29 @@ async def procesar_lote(
                 detail=str(e)
             )
         
-        # Asegurar que existe el directorio de uploads
+ 
         os.makedirs(config.upload_dir, exist_ok=True)
-        
-        # Procesar cada archivo
+         
         imagenes_data = []
         archivos_guardados = []
         tamanio_total = 0
         
         for i, file in enumerate(files):
             try:
-                # Validar archivo
+ 
                 es_valido, error = validar_archivo(file)
                 if not es_valido:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=f"Archivo '{file.filename}': {error}"
                     )
-                
-                # Guardar archivo temporal
+                 
                 ruta_temporal, tamanio = await guardar_archivo_temporal(
                     file, config.upload_dir, id_lote
                 )
                 archivos_guardados.append(ruta_temporal)
                 tamanio_total += tamanio
-                
-                # Agregar a la lista de procesamiento
+ 
                 imagenes_data.append({
                     'nombre_original': file.filename,
                     'formato_original': Path(file.filename).suffix.lower().lstrip('.'),
@@ -253,7 +238,7 @@ async def procesar_lote(
                 })
                 
             except HTTPException:
-                # Limpiar archivos guardados hasta el momento
+ 
                 for ruta in archivos_guardados:
                     try:
                         if os.path.exists(ruta):
@@ -267,7 +252,7 @@ async def procesar_lote(
             f"({tamanio_total / (1024*1024):.2f}MB total)"
         )
         
-        # Crear solicitud de procesamiento
+ 
         try:
             resultado = procesador.crear_solicitud_procesamiento(
                 id_usuario=usuario_id, 
@@ -288,8 +273,7 @@ async def procesar_lote(
                 **resultado
             }
             
-        except Exception as e:
-            # Limpiar archivos si falla la creación de la solicitud
+        except Exception as e: 
             for ruta in archivos_guardados:
                 try:
                     if os.path.exists(ruta):
@@ -346,8 +330,7 @@ async def obtener_historial(
     """Obtiene el historial de lotes procesados por el usuario"""
     try:
         usuario_id = token_data.get('id')
-        
-        # Validar parámetros
+         
         if limite < 1 or limite > 100:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

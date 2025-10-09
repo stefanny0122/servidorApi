@@ -9,8 +9,7 @@ from models.imagen import ImagenServidor
 from models.transformacion import Transformacion
 from models.cliente_models import SolicitudCliente, ImagenCliente
 from config import config
-from utils.logger import get_logger
-# IMPORTACIÓN CORREGIDA:
+from utils.logger import get_logger 
 from services.GestorNodoImpl import GestorNodosImpl
 
 logger = get_logger("ProcesadorLotesCorregido")
@@ -26,15 +25,14 @@ class ProcesadorLotesImpl:
             logger.info(f"Creando solicitud de procesamiento para usuario {id_usuario}, {len(imagenes)} imágenes")
             
             with get_db_servidor() as db_servidor:
-                # Crear solicitud en servidor
+ 
                 solicitud_servidor = SolicitudServidor(
                     id_usuario=id_usuario,
                     estado='procesando'
                 )
                 db_servidor.add(solicitud_servidor)
                 db_servidor.flush()
-                
-                # Crear solicitud en cliente
+                 
                 with get_db_cliente() as db_cliente:
                     solicitud_cliente = SolicitudCliente(
                         id_usuario=id_usuario,
@@ -42,13 +40,12 @@ class ProcesadorLotesImpl:
                     )
                     db_cliente.add(solicitud_cliente)
                     db_cliente.commit()
-                
-                # Procesar cada imagen
+                 
                 resultados = []
                 hilos = []
                 
                 for i, img_data in enumerate(imagenes):
-                    # Guardar información de la imagen en BD
+ 
                     imagen_servidor = ImagenServidor(
                         id_solicitud=solicitud_servidor.id_solicitud,
                         nombre_original=img_data['nombre_original'],
@@ -58,8 +55,7 @@ class ProcesadorLotesImpl:
                     )
                     db_servidor.add(imagen_servidor)
                     db_servidor.flush()
-                    
-                    # Guardar transformaciones en BD (solo para registro)
+                     
                     for j, transformacion in enumerate(img_data['transformaciones']):
                         trans = Transformacion(
                             id_imagen=imagen_servidor.id_imagen,
@@ -68,20 +64,17 @@ class ProcesadorLotesImpl:
                             orden=j
                         )
                         db_servidor.add(trans)
-                    
-                    # Procesar imagen en hilo separado
+                     
                     hilo = threading.Thread(
                         target=self._procesar_imagen_thread,
                         args=(imagen_servidor.id_imagen, img_data, resultados)
                     )
                     hilos.append(hilo)
                     hilo.start()
-                
-                # Esperar a que todos los hilos terminen
+                 
                 for hilo in hilos:
                     hilo.join()
-                
-                # Actualizar estado de la solicitud basado en resultados
+                 
                 procesamientos_exitosos = sum(1 for r in resultados if r.get('exito', False))
                 
                 if procesamientos_exitosos == len(imagenes):
@@ -122,18 +115,16 @@ class ProcesadorLotesImpl:
     def _procesar_imagen_thread(self, id_imagen: int, img_data: Dict, resultados: List):
         """Procesa una imagen en un hilo separado delegando al nodo worker"""
         try:
-            # Crear trabajo para el nodo worker
+ 
             trabajo = {
                 'id_trabajo': f"img_{id_imagen}",
                 'ruta_entrada': img_data['ruta_temporal'],
                 'ruta_salida': os.path.join(config.results_dir, f"resultado_{id_imagen}.png"),
                 'transformaciones': img_data['transformaciones']
             }
-            
-            # Ejecutar en nodo disponible
+             
             resultado = self.gestor_nodos.ejecutar_trabajo_en_nodo(trabajo)
-            
-            # Actualizar base de datos con el resultado
+             
             with get_db_servidor() as db:
                 imagen = db.query(ImagenServidor).filter(ImagenServidor.id_imagen == id_imagen).first()
                 if imagen:

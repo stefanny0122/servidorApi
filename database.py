@@ -6,8 +6,7 @@ from config import config
 import logging
 
 logger = logging.getLogger("Database")
-
-# Motores de base de datos 
+ 
 engine_servidor = create_engine(
     config.get_db_url("servidor"),
     pool_size=config.db_servidor.pool_size,
@@ -23,14 +22,12 @@ engine_cliente = create_engine(
     echo=config.debug,
     pool_pre_ping=True
 )
-
-# Sessions
+ 
 SessionServidor = sessionmaker(bind=engine_servidor)
 SessionCliente = sessionmaker(bind=engine_cliente)
 
 Base = declarative_base()
-
-# Importar modelos para que SQLAlchemy los detecte
+ 
 from models.usuario import UsuarioServidor
 from models.cliente_models import UsuarioCliente
 from models.lote_procesamiento import SolicitudServidor
@@ -42,12 +39,10 @@ from models.log_sistema import LogSistema
 
 def init_db():
     """Inicializa las tablas en la base de datos"""
-    try:
-        # Crear todas las tablas para servidor
+    try: 
         Base.metadata.create_all(bind=engine_servidor)
         logger.info("Tablas de servidor creadas/inicializadas")
-        
-        # Crear todas las tablas para cliente
+         
         Base.metadata.create_all(bind=engine_cliente)
         logger.info("Tablas de cliente creadas/inicializadas")
         

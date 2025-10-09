@@ -29,8 +29,7 @@ class GestorNodosImpl:
         Returns:
             Resultado del procesamiento
         """
-        try:
-            # Seleccionar nodo óptimo
+        try: 
             id_nodo = self.balanceador.obtener_nodo_optimo()
             
             if not id_nodo:
@@ -39,8 +38,7 @@ class GestorNodosImpl:
                     "error": "No hay nodos disponibles",
                     "id_trabajo": trabajo.get('id_trabajo', 'desconocido')
                 }
-            
-            # Usar el método con transferencia de archivos
+         
             resultado = self.cliente.enviar_trabajo_con_archivos(
                 id_nodo=id_nodo,
                 id_trabajo=trabajo['id_trabajo'],
@@ -67,8 +65,7 @@ class GestorNodosImpl:
     def obtener_nodo_disponible(self) -> Optional[Dict[str, Any]]:
         """Obtiene un nodo disponible"""
         id_nodo = self.balanceador.obtener_nodo_optimo()
-        if id_nodo:
-            # Obtener información detallada del nodo
+        if id_nodo: 
             estado = self.cliente.obtener_estado_nodo(id_nodo)
             if estado:
                 return {

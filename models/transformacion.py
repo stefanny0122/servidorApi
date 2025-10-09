@@ -8,6 +8,6 @@ class Transformacion(Base):
     id_transformacion = Column(Integer, primary_key=True, autoincrement=True)
     id_imagen = Column(Integer, ForeignKey('imagenes_servidor.id_imagen'))
     tipo = Column(String(50), nullable=False)
-    parametros = Column(Text)  # JSON como string
+    parametros = Column(Text)   
     orden = Column(Integer, default=0)
     fecha_creacion = Column(DateTime, default=func.now())

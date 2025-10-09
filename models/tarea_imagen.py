@@ -10,11 +10,10 @@ class TareaImagen(Base):
     id_imagen = Column(Integer, ForeignKey("imagenservidor.id_imagen"), nullable=False)
     id_nodo = Column(Integer, ForeignKey("nodo.id_nodo"), nullable=True)
     estado = Column(Enum('pendiente', 'procesando', 'completada', 'fallida', 'cancelada'), default='pendiente')
-    transformaciones_aplicadas = Column(JSON, nullable=True)  # Lista de transformaciones aplicadas
+    transformaciones_aplicadas = Column(JSON, nullable=True) 
     fecha_inicio = Column(DateTime, nullable=True)
     fecha_fin = Column(DateTime, nullable=True)
     error_message = Column(Text, nullable=True)
-    
-    # Relaciones
+     
     imagen = relationship("ImagenServidor", backref="tareas")
     nodo = relationship("Nodo", backref="tareas")

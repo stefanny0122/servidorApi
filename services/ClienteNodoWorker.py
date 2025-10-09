@@ -29,7 +29,7 @@ class ClienteNodoWorker:
         self.timeout = timeout
         self._ns_cache = None
         self._last_ns_refresh = 0
-        self.NS_CACHE_TTL = 60  # Refrescar cache cada 60s
+        self.NS_CACHE_TTL = 60   
     
     def _obtener_nameserver(self) -> Pyro5.api.Proxy:
         """Obtiene proxy al NameServer con cache"""
@@ -206,37 +206,30 @@ class ClienteNodoWorker:
                     "exito": False,
                     "error": "Nodo no disponible"
                 }
-            
-            # Validar que el archivo de entrada existe
+             
             if not os.path.exists(ruta_entrada):
                 return {
                     "id_trabajo": id_trabajo,
                     "exito": False,
                     "error": f"Archivo de entrada no existe: {ruta_entrada}"
                 }
-            
-            # Leer y codificar archivo de entrada
+             
             with open(ruta_entrada, "rb") as f:
                 imagen_codificada = base64.b64encode(f.read()).decode('utf-8')
-            
-            # Obtener nombre de archivo
+             
             nombre_archivo = os.path.basename(ruta_entrada)
-            
-            # Llamada RPC remota CON transferencia de archivo
+             
             resultado = proxy.procesar_con_archivo(
                 id_trabajo=id_trabajo,
                 nombre_archivo=nombre_archivo,
                 imagen_codificada=imagen_codificada,
                 transformaciones=transformaciones
             )
-            
-            # Decodificar y guardar resultado si fue exitoso
+             
             if resultado.get("exito") and resultado.get("imagen_resultado"):
-                try:
-                    # Crear directorio de salida si no existe
+                try: 
                     os.makedirs(os.path.dirname(ruta_salida), exist_ok=True)
-                    
-                    # Decodificar y guardar imagen resultante
+                     
                     imagen_decodificada = base64.b64decode(resultado["imagen_resultado"])
                     with open(ruta_salida, "wb") as f:
                         f.write(imagen_decodificada)
@@ -335,8 +328,7 @@ class BalanceadorCargaNodos:
             if not nodos:
                 logger.warning("No hay nodos registrados")
                 return None
-            
-            # Obtener estado de cada nodo
+             
             estados = []
             for id_nodo in nodos:
                 estado = self.cliente.obtener_estado_nodo(id_nodo)
@@ -346,8 +338,7 @@ class BalanceadorCargaNodos:
             if not estados:
                 logger.warning("No hay nodos activos")
                 return None
-            
-            # Seleccionar nodo con menor carga
+             
             nodo_optimo = min(
                 estados,
                 key=lambda x: x[1].get("trabajos_activos", 999)

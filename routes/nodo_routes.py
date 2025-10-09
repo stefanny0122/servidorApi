@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import List, Dict, Any
-from services.autenticacion import ServicioAutenticacion
-# IMPORTACIÓN CORREGIDA:
+from services.autenticacion import ServicioAutenticacion 
 from services.GestorNodoImpl import GestorNodosImpl
 from utils.logger import get_logger
 
@@ -17,10 +16,9 @@ class NodoRegistroRequest(BaseModel):
     capacidad_total: int
 
 class NodoEstadoUpdateRequest(BaseModel):
-    estado: str  # activo, inactivo, mantenimiento
+    estado: str   
     capacidad_usada: int = 0
-
-# Dependencia local para evitar importacion circular
+ 
 async def verificar_token_dependencia(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Dependencia local para verificar token"""
     try:

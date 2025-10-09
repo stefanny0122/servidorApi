@@ -54,7 +54,7 @@ class ServicioAutenticacion:
     def autenticar_usuario(self, email: str, password: str, tipo: str = "servidor") -> Optional[Any]:
         """Autentica usuario en servidor o cliente - CORREGIDO"""
         try:
-            # Obtener usuario dentro del contexto de la sesion
+ 
             if tipo == "servidor":
                 with get_db_servidor() as db:
                     usuario = db.query(UsuarioServidor).filter(UsuarioServidor.email == email).first()
@@ -63,12 +63,11 @@ class ServicioAutenticacion:
                         logger.warning(f"Intento de login con email no registrado: {email}")
                         return None
                     
-                    # Verificar contraseña ANTES de salir del contexto
+                    
                     if not SeguridadUtils.verificar_password(password, usuario.contraseña):
                         logger.warning(f"Contraseña incorrecta para usuario: {email}")
                         return None
-                    
-                    # Retornar solo los datos necesarios, no el objeto de BD
+                     
                     return {
                         'id_usuario': usuario.id_usuario,
                         'nombre': usuario.nombre,
@@ -100,24 +99,20 @@ class ServicioAutenticacion:
     
     def registrar_usuario(self, nombre: str, email: str, password: str, tipo: str = "servidor") -> Dict[str, Any]:
         """Registra nuevo usuario con validaciones de seguridad"""
-        try:
-            # Validaciones
+        try: 
             if not SeguridadUtils.validar_formato_email(email):
                 return {"success": False, "error": "Formato de email invalido"}
             
             es_segura, mensaje = SeguridadUtils.validar_fortaleza_password(password)
             if not es_segura:
                 return {"success": False, "error": mensaje}
-            
-            # Verificar si el usuario ya existe
+             
             usuario_existente = self.obtener_usuario_por_email(email, tipo)
             if usuario_existente:
                 return {"success": False, "error": "El email ya esta registrado"}
-            
-            # Hash de contraseña
+             
             hashed_password = SeguridadUtils.get_password_hash(password)
-            
-            # Crear usuario
+             
             if tipo == "servidor":
                 with get_db_servidor() as db:
                     nuevo_usuario = UsuarioServidor(

@@ -17,16 +17,13 @@ class ServicioAlmacenamiento:
     
     def guardar_imagen_temporal(self, file_content: bytes, filename: str) -> str:
         """Guarda una imagen temporalmente antes del procesamiento"""
-        try:
-            # Crear directorio si no existe
+        try: 
             os.makedirs(self.base_dir, exist_ok=True)
-            
-            # Generar ruta única
+             
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             unique_filename = f"{timestamp}_{filename}"
             file_path = os.path.join(self.base_dir, unique_filename)
-            
-            # Guardar archivo
+             
             with open(file_path, "wb") as f:
                 f.write(file_content)
             
@@ -40,17 +37,14 @@ class ServicioAlmacenamiento:
     def guardar_resultado(self, imagen_procesada, id_imagen: int, formato: str) -> str:
         """Guarda la imagen procesada en el directorio de resultados"""
         try:
-            # Crear directorio de resultados si no existe
+ 
             os.makedirs(self.results_dir, exist_ok=True)
-            
-            # Generar nombre único
+             
             filename = f"resultado_{id_imagen}.{formato.lower()}"
             file_path = os.path.join(self.results_dir, filename)
-            
-            # Guardar imagen
+             
             imagen_procesada.save(file_path, format=formato.upper())
-            
-            # Registrar en base de datos
+             
             with get_db_servidor() as db:
                 resultado = Resultado(
                     id_imagen=id_imagen,
@@ -84,7 +78,7 @@ class ServicioAlmacenamiento:
             for filename in os.listdir(self.base_dir):
                 file_path = os.path.join(self.base_dir, filename)
                 if os.path.isfile(file_path):
-                    # Verificar antigüedad
+      
                     file_time = os.path.getctime(file_path)
                     if (current_time - file_time) > (horas * 3600):
                         os.remove(file_path)
@@ -98,19 +92,18 @@ class ServicioAlmacenamiento:
         
         try:
             with get_db_servidor() as db:
-                # Obtener imágenes de la solicitud
+ 
                 imagenes = db.query(ImagenServidor).filter(
                     ImagenServidor.id_solicitud == id_solicitud,
                     ImagenServidor.estado == 'procesada'
                 ).all()
-            
-            # Crear ZIP
+             
             zip_path = os.path.join(self.results_dir, f"lote_{id_solicitud}.zip")
             with zipfile.ZipFile(zip_path, 'w') as zipf:
                 for imagen in imagenes:
                     resultado = self.obtener_ruta_resultado(imagen.id_imagen)
                     if resultado and os.path.exists(resultado):
-                        # Agregar al ZIP con nombre original
+ 
                         zipf.write(resultado, f"{imagen.nombre_original}")
             
             logger.info(f"ZIP creado para lote {id_solicitud}: {zip_path}")

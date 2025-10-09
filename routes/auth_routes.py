@@ -282,8 +282,7 @@ async def cambiar_password(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Contraseña actual incorrecta"
             )
-        
-        # Cambiar contraseña
+         
         resultado = servicio.cambiar_password(
             usuario.id_usuario,
             cambio_data.new_password,
@@ -325,22 +324,20 @@ async def solicitar_reset_password(
     """Endpoint para solicitar reset de contraseña"""
     try:
         servicio = ServicioAutenticacion()
-        
-        # Generar token de reset
+         
         token = servicio.generar_token_reset_password(
             reset_data.email,
             reset_data.tipo
         )
         
         if not token:
-            # Por seguridad, no revelamos si el email existe o no
+             
             logger.warning(f"Intento de reset para email no existente: {reset_data.email}")
             return {
                 "success": True,
                 "message": "Si el email existe, recibirás instrucciones para resetear tu contraseña"
             }
-        
-        # Enviar email con token
+         
         background_tasks.add_task(
             enviar_email_reset_password,
             reset_data.email,
@@ -434,8 +431,7 @@ async def enviar_email_bienvenida(email: str, nombre: str):
     """Funcion para enviar email de bienvenida"""
     try:
         logger.info(f"Enviando email de bienvenida a {nombre} <{email}>")
-        # Aquí implementarías el envío real del email
-        # Por ejemplo usando SendGrid, AWS SES, etc.
+     
     except Exception as e:
         logger.error(f"Error enviando email de bienvenida: {e}")
 
@@ -443,7 +439,7 @@ async def enviar_email_reset_password(email: str, token: str):
     """Funcion para enviar email de reset de contraseña"""
     try:
         logger.info(f"Enviando email de reset de password a {email}")
-        # Aquí implementarías el envío real del email con el link de reset
+     
         reset_link = f"https://tu-app.com/reset-password?token={token}"
     except Exception as e:
         logger.error(f"Error enviando email de reset: {e}")

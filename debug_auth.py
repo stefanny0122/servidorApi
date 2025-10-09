@@ -14,26 +14,24 @@ def verificar_archivos_nodos():
     
     for archivo in archivos_necesarios:
         if os.path.exists(archivo):
-            print(f"✅ {archivo}")
+            print(f"  {archivo}")
         else:
-            print(f"❌ {archivo} - NO ENCONTRADO")
-    
-    # Verificar transformaciones
+            print(f"  {archivo} - NO ENCONTRADO")
+     
     print("\n=== TRANSFORMACIONES ===")
     transformaciones_dir = 'transformaciones'
     if os.path.exists(transformaciones_dir):
         archivos_transform = os.listdir(transformaciones_dir)
         for archivo in archivos_transform:
             if archivo.endswith('.py'):
-                print(f"✅ transformaciones/{archivo}")
+                print(f"  transformaciones/{archivo}")
     else:
-        print("❌ Directorio 'transformaciones' no encontrado")
+        print("  Directorio 'transformaciones' no encontrado")
 
 def test_endpoints_nodos():
     print("\n=== TEST ENDPOINTS NODOS ===")
     BASE_URL = "http://localhost:8080"
-    
-    # 1. Login primero
+     
     print("1. Obteniendo token...")
     login_data = {
         "email": "admin@example.com",
@@ -46,15 +44,14 @@ def test_endpoints_nodos():
         if response.status_code == 200:
             token = response.json()['access_token']
             headers = {"Authorization": f"Bearer {token}"}
-            print("   ✅ Token obtenido")
+            print("     Token obtenido")
         else:
-            print(f"   ❌ Error en login: {response.text}")
+            print(f"     Error en login: {response.text}")
             return
     except Exception as e:
-        print(f"   ❌ Error: {e}")
+        print(f"     Error: {e}")
         return
-    
-    # 2. Probar endpoints de nodos
+     
     endpoints = [
         ("/nodos/registrar", "POST"),
         ("/nodos/estado", "GET"), 
@@ -67,7 +64,7 @@ def test_endpoints_nodos():
             if method == "GET":
                 response = requests.get(f"{BASE_URL}{endpoint}", headers=headers)
             else:
-                # Para POST, enviar datos de prueba
+ 
                 test_data = {
                     "ip": "localhost",
                     "descripcion": "Nodo de prueba",
@@ -77,12 +74,12 @@ def test_endpoints_nodos():
             
             print(f"   Status: {response.status_code}")
             if response.status_code == 200:
-                print(f"   ✅ EXITOSO: {response.json()}")
+                print(f"     EXITOSO: {response.json()}")
             else:
-                print(f"   ❌ ERROR: {response.text}")
+                print(f"     ERROR: {response.text}")
                 
         except Exception as e:
-            print(f"   ❌ Exception: {e}")
+            print(f"     Exception: {e}")
 
 if __name__ == "__main__":
     verificar_archivos_nodos()

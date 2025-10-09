@@ -1,4 +1,3 @@
-# Este archivo hace que el directorio models sea un paquete Python
 from .usuario import UsuarioServidor
 from .cliente_models import UsuarioCliente, SolicitudCliente, ImagenCliente
 from .lote_procesamiento import SolicitudServidor

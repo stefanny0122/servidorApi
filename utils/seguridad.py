@@ -12,8 +12,7 @@ from utils.logger import get_logger
 logger = get_logger("SeguridadUtils")
 
 class SeguridadUtils:
-    
-    # === HASHING Y VERIFICACIÓN DE CONTRASEÑAS (PBKDF2 - SIN BCRYPT) ===
+     
     @staticmethod
     def verificar_password(plain_password: str, hashed_password: str) -> bool:
         """
@@ -21,26 +20,23 @@ class SeguridadUtils:
         Usa PBKDF2-HMAC-SHA256 (100,000 iteraciones - Estándar OWASP)
         """
         try:
-            # El hash almacenado contiene salt + hash en formato hex
-            combined = bytes.fromhex(hashed_password)
-            
-            # Extraer el salt (primeros 32 bytes)
+ 
+            combined = bytes.fromhex(hashed_password) 
             salt = combined[:32]
             stored_hash = combined[32:]
-            
-            # Generar hash de la contraseña proporcionada con el mismo salt
+             
             pwd_hash = hashlib.pbkdf2_hmac(
                 'sha256',
                 plain_password.encode('utf-8'),
                 salt,
-                100000  # 100,000 iteraciones (recomendado por OWASP 2023)
+                100000   
             )
             
-            # Comparación segura contra timing attacks
+           
             return hmac.compare_digest(pwd_hash, stored_hash)
             
         except ValueError as e:
-            # Si el hash no está en formato correcto
+ 
             logger.warning(f"Hash en formato incorrecto: {e}")
             return False
         except Exception as e:
@@ -56,18 +52,16 @@ class SeguridadUtils:
         - Resultado: hex(salt + hash)
         """
         try:
-            # Generar un salt único aleatorio de 32 bytes
+ 
             salt = secrets.token_bytes(32)
-            
-            # Usar PBKDF2 con 100,000 iteraciones
+             
             pwd_hash = hashlib.pbkdf2_hmac(
                 'sha256',
                 password.encode('utf-8'),
                 salt,
                 100000
             )
-            
-            # Combinar salt + hash y convertir a hex para almacenamiento
+             
             combined = salt + pwd_hash
             return combined.hex()
             
@@ -77,8 +71,7 @@ class SeguridadUtils:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error procesando la contraseña"
             )
-    
-    # === JWT TOKENS ===
+     
     @staticmethod
     def crear_token_acceso(data: dict, expires_delta: Optional[timedelta] = None) -> str:
         """Crea un token JWT de acceso"""
@@ -166,8 +159,7 @@ class SeguridadUtils:
             "token_type": "bearer",
             "expires_in": int(access_token_expires.total_seconds())
         }
-    
-    # === VALIDACIONES DE SEGURIDAD ===
+     
     @staticmethod
     def validar_fortaleza_password(password: str, strict: bool = False) -> Tuple[bool, str]:
         """
@@ -182,11 +174,11 @@ class SeguridadUtils:
             return False, "La contraseña debe tener al menos 6 caracteres"
         
         if not strict:
-            # Modo permisivo para desarrollo
+ 
             logger.debug("Validación de password en modo permisivo (solo 6+ caracteres)")
             return True, "Contraseña válida"
         
-        # Modo estricto para producción
+ 
         errores = []
         
         if not any(c.islower() for c in password):

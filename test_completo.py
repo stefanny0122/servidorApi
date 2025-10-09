@@ -6,10 +6,9 @@ import sys
 import os
 from PIL import Image
 import io
-
-# Configuración de rutas
+ 
 BASE_URL = "http://localhost:8080"
-RUTA_NODOS = r"D:\Nodos"  # Ajusta esta ruta según tu sistema
+RUTA_NODOS = r"D:\Nodos"  
 
 class TestSistemaUnificado:
     def __init__(self):
@@ -75,7 +74,7 @@ class TestSistemaUnificado:
             self.worker_process = subprocess.Popen([
                 sys.executable, "nodo_worker.py", "worker01"
             ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding='utf-8',
-            cwd=RUTA_NODOS)  # Ejecutar desde el directorio de nodos
+            cwd=RUTA_NODOS)   
             
             time.sleep(3)
             
@@ -139,8 +138,7 @@ class TestSistemaUnificado:
         """Probar procesamiento completo a través del servidor"""
         print("5. PROBANDO PROCESAMIENTO COMPLETO...")
         
-        try:
-            # Crear imagen de prueba en memoria
+        try: 
             img = Image.new('RGB', (200, 200), color='purple')
             img_bytes = io.BytesIO()
             img.save(img_bytes, format='PNG')
@@ -195,8 +193,7 @@ class TestSistemaUnificado:
         """Ejecutar todas las pruebas"""
         print("SISTEMA DISTRIBUIDO - PRUEBAS UNIFICADAS")
         print("=" * 50)
-        
-        # Primero verificar rutas
+         
         if not self.verificar_rutas():
             print("ERROR: Rutas del sistema incorrectas")
             return False
@@ -232,7 +229,7 @@ class TestSistemaUnificado:
         return exitos == total
 
 if __name__ == "__main__":
-    # Verificar si se proporcionó una ruta personalizada
+ 
     if len(sys.argv) > 1:
         RUTA_NODOS = sys.argv[1]
         print(f"Usando ruta personalizada: {RUTA_NODOS}")
