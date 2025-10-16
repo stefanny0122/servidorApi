@@ -32,7 +32,7 @@ app.mount("/results", StaticFiles(directory=config.results_dir), name="results")
 app.include_router(auth_routes.router)
 app.include_router(lote_routes.router)
 app.include_router(nodo_routes.router)
-app.include_router(imagen_individual_routes.router)   # CORREGIDO
+app.include_router(imagen_individual_routes.router)   
 
 @app.on_event("startup")
 async def startup_event():

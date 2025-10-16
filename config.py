@@ -23,9 +23,8 @@ class JWTConfig:
 
 @dataclass
 class PyroConfig:
-    ns_host: str = "localhost"
+    ns_host: str = "10.153.78.63" 
     ns_port: int = 9090
-
 @dataclass
 class SecurityConfig:
     allowed_origins: List[str] = field(default_factory=lambda: ["http://localhost:3000", "http://127.0.0.1:3000"])

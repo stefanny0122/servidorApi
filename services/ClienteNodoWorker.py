@@ -11,6 +11,7 @@ from utils.logger import get_logger
 import time
 import base64
 import os
+from config import config  # ← IMPORTAR CONFIG
 
 logger = get_logger("ClienteNodoWorker")
 
@@ -32,28 +33,34 @@ class ClienteNodoWorker:
         self.NS_CACHE_TTL = 60   
     
     def _obtener_nameserver(self) -> Pyro5.api.Proxy:
-        """Obtiene proxy al NameServer con cache"""
+        """Obtiene proxy al NameServer con cache - USANDO CONFIG EXPLÍCITO"""
         ahora = time.time()
         
         if self._ns_cache is None or (ahora - self._last_ns_refresh) > self.NS_CACHE_TTL:
             try:
-                self._ns_cache = Pyro5.api.locate_ns()
+                # USAR CONFIG EXPLÍCITAMENTE
+                ns_host = config.pyro.ns_host
+                ns_port = config.pyro.ns_port
+                
+                logger.info(f"Conectando a NameServer en {ns_host}:{ns_port}")
+                self._ns_cache = Pyro5.api.locate_ns(host=ns_host, port=ns_port)  # ← CONFIG EXPLÍCITA
                 self._last_ns_refresh = ahora
                 logger.debug("NameServer cache actualizado")
             except Pyro5.errors.NamingError as e:
-                logger.error(f"Error conectando con NameServer: {e}")
-                raise ConnectionError("No se puede conectar con NameServer")
+                logger.error(f"Error conectando con NameServer en {config.pyro.ns_host}:{config.pyro.ns_port}: {e}")
+                raise ConnectionError(f"No se puede conectar con NameServer en {config.pyro.ns_host}:{config.pyro.ns_port}")
         
         return self._ns_cache
     
     def listar_nodos_disponibles(self) -> List[str]:
         """
         Lista todos los nodos workers registrados en el NameServer.
-        
-        Returns:
-            Lista de IDs de nodos (ej: ['worker01', 'worker02'])
         """
         try:
+            # Forzar nueva conexión al NameServer (sin cache)
+            self._ns_cache = None
+            self._last_ns_refresh = 0
+            
             ns = self._obtener_nameserver()
             registros = ns.list(prefix="nodo.")
             
@@ -68,12 +75,6 @@ class ClienteNodoWorker:
     def obtener_proxy_nodo(self, id_nodo: str) -> Optional[Pyro5.api.Proxy]:
         """
         Obtiene un proxy Pyro5 para comunicarse con un nodo específico.
-        
-        Args:
-            id_nodo: ID del nodo (ej: 'worker01')
-            
-        Returns:
-            Proxy al nodo o None si no está disponible
         """
         try:
             ns = self._obtener_nameserver()
@@ -96,12 +97,6 @@ class ClienteNodoWorker:
     def ping_nodo(self, id_nodo: str) -> bool:
         """
         Verifica si un nodo está activo y responde.
-        
-        Args:
-            id_nodo: ID del nodo
-            
-        Returns:
-            True si el nodo responde, False en caso contrario
         """
         try:
             proxy = self.obtener_proxy_nodo(id_nodo)
@@ -125,12 +120,6 @@ class ClienteNodoWorker:
     def obtener_estado_nodo(self, id_nodo: str) -> Optional[Dict[str, Any]]:
         """
         Obtiene el estado detallado de un nodo.
-        
-        Args:
-            id_nodo: ID del nodo
-            
-        Returns:
-            Dict con estado del nodo o None si no está disponible
         """
         try:
             proxy = self.obtener_proxy_nodo(id_nodo)
@@ -148,12 +137,6 @@ class ClienteNodoWorker:
     def verificar_disponibilidad(self, id_nodo: str) -> bool:
         """
         Verifica si un nodo puede aceptar más trabajos.
-        
-        Args:
-            id_nodo: ID del nodo
-            
-        Returns:
-            True si el nodo está disponible para trabajar
         """
         try:
             proxy = self.obtener_proxy_nodo(id_nodo)
@@ -178,18 +161,6 @@ class ClienteNodoWorker:
     ) -> Optional[Dict[str, Any]]:
         """
         ENVÍA TRABAJO CON TRANSFERENCIA DE ARCHIVOS
-        Lee la imagen del servidor, la codifica en base64, la envía al nodo,
-        y guarda el resultado devuelto.
-        
-        Args:
-            id_nodo: ID del nodo worker
-            id_trabajo: ID único del trabajo
-            ruta_entrada: Ruta local del archivo de entrada
-            ruta_salida: Ruta local donde guardar el resultado
-            transformaciones: Lista de transformaciones a aplicar
-            
-        Returns:
-            Dict con resultado del procesamiento
         """
         try:
             logger.info(
@@ -303,6 +274,15 @@ class ClienteNodoWorker:
         return self.enviar_trabajo_con_archivos(
             id_nodo, id_trabajo, ruta_entrada, ruta_salida, transformaciones
         )
+"""
+Balanceador de carga para distribuir trabajos entre nodos workers.
+"""
+
+from typing import Dict, Any, List, Optional
+from utils.logger import get_logger
+import time
+
+logger = get_logger("BalanceadorCargaNodos")
 
 
 class BalanceadorCargaNodos:
@@ -312,23 +292,36 @@ class BalanceadorCargaNodos:
     """
     
     def __init__(self):
+        from services.ClienteNodoWorker import ClienteNodoWorker
         self.cliente = ClienteNodoWorker()
         
     def obtener_nodo_optimo(self) -> Optional[str]:
         """
         Selecciona el mejor nodo para procesar un trabajo.
         Usa estrategia de menor carga actual.
-        
-        Returns:
-            ID del nodo óptimo o None si no hay nodos disponibles
         """
         try:
-            nodos = self.cliente.listar_nodos_disponibles()
+            # Intentar hasta 3 veces con delay
+            nodos = []
+            for intento in range(3):
+                try:
+                    nodos = self.cliente.listar_nodos_disponibles()
+                    
+                    if nodos:
+                        break  # Salir si encontró nodos
+                        
+                    logger.warning(f"Intento {intento + 1}: No hay nodos disponibles")
+                    if intento < 2:  # No esperar en el último intento
+                        time.sleep(1)
+                except Exception as e:
+                    logger.warning(f"Intento {intento + 1} falló: {e}")
+                    if intento < 2:
+                        time.sleep(1)
             
             if not nodos:
-                logger.warning("No hay nodos registrados")
+                logger.error("No hay nodos registrados después de 3 intentos")
                 return None
-             
+                 
             estados = []
             for id_nodo in nodos:
                 estado = self.cliente.obtener_estado_nodo(id_nodo)
@@ -362,9 +355,6 @@ class BalanceadorCargaNodos:
     def obtener_estado_cluster(self) -> Dict[str, Any]:
         """
         Obtiene el estado agregado de todos los nodos.
-        
-        Returns:
-            Dict con estadísticas del cluster
         """
         try:
             nodos = self.cliente.listar_nodos_disponibles()
